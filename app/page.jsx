@@ -24,7 +24,7 @@ export default function Home() {
     try {
       const result = await createRoom({
         isPrivate: quickPrivate,
-        gameMode: 'classic',
+        gameMode: 'none',
         maxPlayers: 4,
       });
       setShowCreateModal(false);
@@ -55,7 +55,7 @@ export default function Home() {
         </h1>
 
         <p className="text-lg text-gray-300 mb-12 max-w-md text-center">
-          Create a room or join an existing one.
+          Create a room or join an existing one by code.
         </p>
 
         <div className="flex flex-col items-center space-y-8">

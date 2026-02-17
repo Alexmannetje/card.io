@@ -35,6 +35,7 @@ export const createRoom = mutation({
   args: {
     isPrivate: v.boolean(),
     gameMode: v.union(
+      v.literal("none"),
       v.literal("classic"),
       v.literal("speed"),
       v.literal("tournament"),
@@ -206,6 +207,7 @@ export const updateRoomSettings = mutation({
     isPrivate: v.optional(v.boolean()),
     gameMode: v.optional(
       v.union(
+        v.literal("none"),
         v.literal("classic"),
         v.literal("speed"),
         v.literal("tournament"),
@@ -315,21 +317,40 @@ export const leaveRoom = mutation({
 
     await ctx.db.delete(member._id);
 
-    if (wasHost) {
-      // Promote the next player (earliest joined) to host, if any remain.
-      const remainingMembers = await ctx.db
-        .query("roomMembers")
+    const remainingMembers = await ctx.db
+      .query("roomMembers")
+      .withIndex("by_room", (q) => q.eq("roomId", room._id))
+      .collect();
+
+    if (remainingMembers.length === 0) {
+      const games = await ctx.db
+        .query("games")
         .withIndex("by_room", (q) => q.eq("roomId", room._id))
         .collect();
-
-      if (remainingMembers.length > 0) {
-        const nextHost = remainingMembers.reduce((earliest, current) =>
-          current.joinedAt < earliest.joinedAt ? current : earliest,
-        remainingMembers[0]);
-
-        await ctx.db.patch(nextHost._id, { role: "admin" });
-        await ctx.db.patch(room._id, { adminId: nextHost.userId });
+      for (const game of games) {
+        const gameStates = await ctx.db
+          .query("gameStates")
+          .withIndex("by_game", (q) => q.eq("gameId", game._id))
+          .collect();
+        for (const gs of gameStates) await ctx.db.delete(gs._id);
+        const gamePlayers = await ctx.db
+          .query("gamePlayers")
+          .withIndex("by_game", (q) => q.eq("gameId", game._id))
+          .collect();
+        for (const gp of gamePlayers) await ctx.db.delete(gp._id);
+        await ctx.db.delete(game._id);
       }
+      await ctx.db.delete(room._id);
+      return;
+    }
+
+    if (wasHost) {
+      const nextHost = remainingMembers.reduce((earliest, current) =>
+        current.joinedAt < earliest.joinedAt ? current : earliest,
+      remainingMembers[0]);
+
+      await ctx.db.patch(nextHost._id, { role: "admin" });
+      await ctx.db.patch(room._id, { adminId: nextHost.userId });
     }
   },
 });

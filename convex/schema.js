@@ -35,6 +35,7 @@ export default defineSchema({
 
     // Settings (admin can change these)
     gameMode: v.union(
+      v.literal("none"),
       v.literal("classic"),
       v.literal("speed"),
       v.literal("tournament"),
@@ -151,9 +152,33 @@ export default defineSchema({
       v.literal("draw"),               // player must draw
       v.literal("play"),               // player must play
       v.literal("end_turn"),           // wrapping up turn
+      v.literal("round_ended"),        // one player left with cards; host can restart
+      v.literal("exchange"),           // players select cards to give; then play
     ),
 
     lastAction: v.optional(v.string()),  // description of last move
+
+    // Presidents / last-play rules: next must play same count, same or higher rank
+    lastPlayedCount: v.optional(v.number()),
+    lastPlayedRank: v.optional(v.string()),
+    lastPlayedBy: v.optional(v.id("users")),
+    passedUserIds: v.optional(v.array(v.id("users"))),
+
+    // Round end: who finished first (leads next round), who has cards (lost)
+    finishedOrder: v.optional(v.array(v.id("users"))),
+    roundLoserId: v.optional(v.id("users")),
+
+    // Exchange phase: who gives how many to whom; player-submitted selections
+    exchangePairs: v.optional(v.array(v.object({
+      fromUserId: v.id("users"),
+      toUserId: v.id("users"),
+      count: v.number(),
+    }))),
+    exchangeSelections: v.optional(v.array(v.object({
+      fromUserId: v.id("users"),
+      cardIds: v.array(v.string()),
+    }))),
+    roundLeaderId: v.optional(v.id("users")),  // who leads after exchange
   })
     .index("by_game", ["gameId"]),
 

@@ -12,6 +12,9 @@ export default function RoomPage() {
   const usernameParam = searchParams.get('name');
 
   const [joinError, setJoinError] = useState(null);
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState(null);
+  const [codeRevealed, setCodeRevealed] = useState(false);
   const hasJoinedRef = useRef(false);
 
   const roomData = useQuery(
@@ -22,6 +25,7 @@ export default function RoomPage() {
   const joinRoom = useMutation(api.rooms.joinRoom);
   const updateSettings = useMutation(api.rooms.updateRoomSettings);
   const leaveRoom = useMutation(api.rooms.leaveRoom);
+  const startGame = useMutation(api.games.startGame);
 
   useEffect(() => {
     if (!codeParam || !usernameParam || hasJoinedRef.current) return;
@@ -42,6 +46,14 @@ export default function RoomPage() {
     })();
   }, [codeParam, usernameParam, joinRoom]);
 
+  // When host starts, redirect all players (including non-host) to the game page
+  useEffect(() => {
+    if (!codeParam || !usernameParam || roomData === undefined) return;
+    if (roomData?.room?.status === 'in_progress') {
+      router.replace(`/game?code=${encodeURIComponent(codeParam.toUpperCase())}&name=${encodeURIComponent(usernameParam)}`);
+    }
+  }, [roomData, codeParam, usernameParam, router]);
+
   const handleLeaveRoom = async () => {
     if (roomCode && usernameParam) {
       try {
@@ -56,16 +68,18 @@ export default function RoomPage() {
   const roomCode = roomData?.room?.code ?? codeParam?.toUpperCase() ?? '-----';
   const roomName = roomData?.room?.name ?? `Room ${roomCode}`;
   const players = roomData?.players ?? [];
+  const roomStatus = roomData?.room?.status ?? 'waiting';
+  const gameInProgress = roomStatus === 'in_progress';
 
   const isPrivate = roomData?.room?.isPrivate ?? false;
-  const gameMode = roomData?.room?.gameMode ?? 'classic';
+  const gameMode = roomData?.room?.gameMode ?? 'none';
   const maxPlayers = roomData?.room?.maxPlayers ?? 4;
   const deckCount = roomData?.room?.deckCount ?? 1;
 
   const missingCode = !codeParam;
   const missingName = !usernameParam;
 
-  const visibleCode = isPrivate ? '******' : roomCode;
+  const visibleCode = isPrivate && !codeRevealed ? '******' : roomCode;
   const maxSlots = Math.max(2, Math.min(10, maxPlayers));
 
   const isHost =
@@ -76,6 +90,7 @@ export default function RoomPage() {
 
   const handleTogglePrivate = () => {
     if (!roomCode || roomCode === '-----' || !usernameParam || !canEditSettings) return;
+    setCodeRevealed(false);
     updateSettings({ code: roomCode, username: usernameParam, isPrivate: !isPrivate });
   };
 
@@ -99,6 +114,24 @@ export default function RoomPage() {
     updateSettings({ code: roomCode, username: usernameParam, deckCount: clamped });
   };
 
+  const handleStartGame = async () => {
+    if (!roomCode || roomCode === '-----' || !usernameParam || !canEditSettings || starting) return;
+    setStartError(null);
+    setStarting(true);
+    try {
+      await startGame({ code: roomCode, username: usernameParam });
+      router.push(`/game?code=${encodeURIComponent(roomCode)}&name=${encodeURIComponent(usernameParam)}`);
+    } catch (err) {
+      setStartError(err?.message ?? 'Failed to start game');
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const handleGoToGame = () => {
+    router.push(`/game?code=${encodeURIComponent(roomCode)}&name=${encodeURIComponent(usernameParam)}`);
+  };
+
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       {/* Background */}
@@ -108,7 +141,7 @@ export default function RoomPage() {
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Header */}
         <header className="px-6 pt-10 pb-6 md:px-10">
-          <h1 className="text-4xl md:text-5xl font-bold">
+          <h1 className="text-4xl md:text-5xl font-bold pl-6">
             <span className="text-blue-500">Your</span> Room
           </h1>
         </header>
@@ -128,17 +161,28 @@ export default function RoomPage() {
                     {visibleCode}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (navigator?.clipboard?.writeText && roomCode && roomCode !== '-----') {
-                      navigator.clipboard.writeText(roomCode);
-                    }
-                  }}
-                  className="hidden sm:inline-flex items-center rounded-lg border border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-200 hover:bg-gray-700/80 transition"
-                >
-                  Copy
-                </button>
+                <div className="hidden sm:flex items-center gap-2">
+                  {isPrivate && (
+                    <button
+                      type="button"
+                      onClick={() => setCodeRevealed((v) => !v)}
+                      className="inline-flex items-center rounded-lg border border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-200 hover:bg-gray-700/80 transition"
+                    >
+                      {codeRevealed ? 'Hide' : 'Show'}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (navigator?.clipboard?.writeText && roomCode && roomCode !== '-----') {
+                        navigator.clipboard.writeText(roomCode);
+                      }
+                    }}
+                    className="inline-flex items-center rounded-lg border border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-200 hover:bg-gray-700/80 transition"
+                  >
+                    Copy
+                  </button>
+                </div>
               </div>
 
               {/* Settings */}
@@ -227,11 +271,36 @@ export default function RoomPage() {
               </div>
 
               {/* Error / missing params */}
-              {(missingCode || missingName || joinError) && (
+              {(missingCode || missingName || joinError || startError) && (
                 <div className="mb-4 text-sm text-red-400">
                   {missingCode && <p>No room code provided. Go back and enter a code.</p>}
                   {missingName && !missingCode && <p>No username provided. Go back and enter your name.</p>}
-                  {joinError && !missingCode && !missingName && <p>{joinError}</p>}
+                  {joinError && !missingCode && !missingName && !startError && <p>{joinError}</p>}
+                  {startError && <p>{startError}</p>}
+                </div>
+              )}
+
+              {/* Start Game / Go to game */}
+              {gameInProgress ? (
+                <div className="mb-4">
+                  <button
+                    type="button"
+                    onClick={handleGoToGame}
+                    className="w-full px-4 py-3 bg-green-600 hover:bg-green-500 rounded-lg font-semibold text-sm transition"
+                  >
+                    Go to game
+                  </button>
+                </div>
+              ) : canEditSettings && players.length >= 2 && gameMode === 'presidents' && (
+                <div className="mb-4">
+                  <button
+                    type="button"
+                    onClick={handleStartGame}
+                    disabled={starting}
+                    className="w-full px-4 py-3 bg-green-600 hover:bg-green-500 disabled:opacity-60 disabled:cursor-not-allowed rounded-lg font-semibold text-sm transition"
+                  >
+                    {starting ? 'Starting…' : 'Start game'}
+                  </button>
                 </div>
               )}
 
@@ -252,7 +321,7 @@ export default function RoomPage() {
                     >
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-semibold">
-                          {player.role === 'admin' ? 'YOU' : index + 1}
+                          {player.username === usernameParam ? 'YOU' : index + 1}
                         </div>
                         <div>
                           <p className="text-sm font-medium">
