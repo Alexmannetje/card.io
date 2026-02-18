@@ -195,10 +195,6 @@ export default function CreatePage() {
           </div>
         </main>
       </div>
-
-      {/* Decorative Background */}
-      <div className="pointer-events-none absolute top-10 left-10 w-40 h-40 bg-blue-500 rounded-full blur-3xl opacity-30"></div>
-      <div className="pointer-events-none absolute bottom-20 right-20 w-60 h-60 bg-purple-500 rounded-full blur-3xl opacity-30"></div>
     </div>
   );
 }

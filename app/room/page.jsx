@@ -353,10 +353,6 @@ export default function RoomPage() {
           </div>
         </main>
       </div>
-
-      {/* Background Decorations */}
-      <div className="absolute top-10 left-10 w-40 h-40 bg-blue-500 rounded-full blur-3xl opacity-30"></div>
-      <div className="absolute bottom-20 right-20 w-60 h-60 bg-purple-500 rounded-full blur-3xl opacity-30"></div>
     </div>
   );
 }

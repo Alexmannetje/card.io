@@ -66,9 +66,13 @@ export default function Home() {
             <button
               type="button"
               onClick={handleCreateClick}
-              className="px-8 py-4 text-lg font-medium bg-blue-500 rounded-lg shadow-lg hover:bg-blue-600 transition"
+              className="block transition hover:opacity-90 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded-lg"
             >
-              Create Game
+              <img
+                src="/button/button-create-game.png"
+                alt="Create Game"
+                className="h-auto max-h-28 w-auto max-w-[560px] md:max-h-32 md:max-w-[640px] object-contain"
+              />
             </button>
           </div>
 
@@ -161,9 +165,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
-      <div className="absolute top-10 left-10 w-40 h-40 bg-blue-500 rounded-full blur-3xl opacity-30"></div>
-      <div className="absolute bottom-20 right-20 w-60 h-60 bg-purple-500 rounded-full blur-3xl opacity-30"></div>
     </div>
   );
 }
