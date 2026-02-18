@@ -133,9 +133,12 @@ export default function RoomPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gray-900 text-white">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-gray-800 to-gray-900 opacity-90"></div>
+    <div
+      className="relative min-h-screen text-white bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/bg/bg-menu-big.png')" }}
+    >
+      {/* Background overlay */}
+      <div className="absolute inset-0 bg-black/40" aria-hidden="true" />
 
       {/* Content Wrapper */}
       <div className="relative z-10 flex flex-col min-h-screen">

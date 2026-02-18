@@ -45,8 +45,11 @@ export default function Home() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gray-900 text-white">
-      <div className="absolute inset-0 bg-gradient-to-b from-gray-800 to-gray-900 opacity-90"></div>
+    <div
+      className="relative min-h-screen text-white bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/bg/bg-menu-big.png')" }}
+    >
+      <div className="absolute inset-0 bg-black/40" aria-hidden="true" />
 
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
         <h1 className="text-6xl font-bold mb-4">

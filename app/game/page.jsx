@@ -218,7 +218,10 @@ export default function GamePage() {
 
   if (!codeParam || !usernameParam) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center gap-4">
+      <div
+        className="min-h-screen text-white flex flex-col items-center justify-center gap-4 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/bg/bg-president.png')" }}
+      >
         <p className="text-gray-400">Missing room code or username.</p>
         <button
           type="button"
@@ -233,7 +236,10 @@ export default function GamePage() {
 
   if (gameData === undefined) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center">
+      <div
+        className="min-h-screen text-white flex flex-col items-center justify-center bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/bg/bg-president.png')" }}
+      >
         <p className="text-gray-400">Loading game…</p>
       </div>
     );
@@ -241,7 +247,10 @@ export default function GamePage() {
 
   if (!gameData) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center gap-4 px-4">
+      <div
+        className="min-h-screen text-white flex flex-col items-center justify-center gap-4 px-4 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/bg/bg-president.png')" }}
+      >
         <p className="text-gray-400 text-center">No active game for this room. Start a game from the room lobby.</p>
         <button
           type="button"
@@ -364,8 +373,11 @@ export default function GamePage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gray-900 text-white">
-      <div className="absolute inset-0 bg-gradient-to-b from-gray-800 to-gray-900 opacity-90" />
+    <div
+      className="relative min-h-screen text-white bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/bg/bg-president.png')" }}
+    >
+      <div className="absolute inset-0 bg-black/40" aria-hidden="true" />
       {/* Round ended modal */}
       {roundEnded && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
@@ -418,7 +430,7 @@ export default function GamePage() {
           </div>
         </header>
 
-        <main className="flex-1 px-6 pb-24 md:px-10 flex gap-6">
+        <main className="flex-1 px-6 pb-44 md:px-10 flex gap-6">
           {/* Left: other players — compact */}
           {others.length > 0 && (
             <aside className="shrink-0 w-36 md:w-40 flex flex-col gap-4 pt-1">
@@ -529,89 +541,102 @@ export default function GamePage() {
             </section>
             )}
 
-            {/* Last played pile — center (hidden during exchange) */}
+            {/* Last played pile — fixed in exact center of viewport (hidden during exchange) */}
             {!exchangePhase && (
-            <section className="flex flex-col items-center justify-center py-6">
-              <p className="text-sm text-gray-500 mb-3">Last play</p>
-              <div className="flex items-end justify-center min-h-[5rem]">
-                {lastPlayedCards.length === 0 ? (
-                  <div className="w-12 h-16 rounded-lg border-2 border-dashed border-gray-600 bg-gray-800/50 flex items-center justify-center text-gray-500 text-xs">
-                    —
-                  </div>
-                ) : (
-                  lastPlayedCards.map((cardId, i) => (
-                    <div
-                      key={`${cardId}-${i}`}
-                      className="relative"
-                      style={{
-                        marginLeft: i === 0 ? 0 : -20,
-                        zIndex: 10 + i,
-                      }}
-                    >
-                      <div className="pointer-events-none">
-                        <Card cardId={cardId} selected={false} onClick={() => {}} />
-                      </div>
+            <section
+              className="fixed inset-0 flex items-center justify-center pointer-events-none z-20"
+              aria-hidden="true"
+            >
+              <div className="flex flex-col items-center justify-center">
+                <p className="text-sm text-gray-500 mb-3">Last play</p>
+                <div className="flex items-end justify-center min-h-[5rem]">
+                  {lastPlayedCards.length === 0 ? (
+                    <div className="w-12 h-16 rounded-lg border-2 border-dashed border-gray-600 bg-gray-800/50 flex items-center justify-center text-gray-500 text-xs">
+                      —
                     </div>
-                  ))
+                  ) : (
+                    lastPlayedCards.map((cardId, i) => (
+                      <div
+                        key={`${cardId}-${i}`}
+                        className="relative"
+                        style={{
+                          marginLeft: i === 0 ? 0 : -20,
+                          zIndex: 10 + i,
+                        }}
+                      >
+                        <div className="pointer-events-none">
+                          <Card cardId={cardId} selected={false} onClick={() => {}} />
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                {lastPlayedPlayer && lastPlayedCards.length > 0 && (
+                  <p className="mt-2 text-xs text-gray-500">{lastPlayedPlayer.username}</p>
                 )}
               </div>
-              {lastPlayedPlayer && lastPlayedCards.length > 0 && (
-                <p className="mt-2 text-xs text-gray-500">{lastPlayedPlayer.username}</p>
-              )}
             </section>
             )}
 
-            {/* Your hand — grouped by rank with overlap; select same rank or 2s as joker / or for exchange */}
-            <section>
-              <h2 className="text-lg font-semibold text-gray-300 mb-3">
-                {exchangePhase && myExchangePair
-                  ? `Select ${myExchangePair.count} card${myExchangePair.count !== 1 ? 's' : ''} to give — your hand (${myHandSorted.length} cards)`
-                  : `Your hand (${myHandSorted.length} cards)`}
-              </h2>
-              {myHandSorted.length === 0 ? (
-                <p className="text-gray-500">No cards.</p>
-              ) : (
-                <div className="flex flex-wrap items-end gap-6">
-                  {handGroups.map((group) => (
-                    <div
-                      key={group.rank}
-                      className="flex items-end shrink-0"
-                    >
-                      {group.cards.map(({ cardId, index }, i) => (
-                        <div
-                          key={`${cardId}-${index}`}
-                          className="relative"
-                          style={{
-                            marginLeft: i === 0 ? 0 : -20,
-                            zIndex: selectedSet.has(index) ? 20 : 10 + i,
-                          }}
-                        >
-                          <Card
-                            cardId={cardId}
-                            selected={selectedSet.has(index)}
-                            onClick={() => {
-                              if (exchangePhase && myExchangePair && selectedSet.size >= myExchangePair.count) return;
-                              handleGroupAddOne(group, myHandSorted);
-                            }}
-                            onContextMenu={(e) => {
-                              e.preventDefault();
-                              handleGroupRemoveOne(group);
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {selectedSet.size > 0 && (
-                <p className="mt-3 text-sm text-gray-400">
-                  {selectedSet.size} card{selectedSet.size !== 1 ? 's' : ''} selected {exchangePhase ? 'to give' : 'to play'}
-                </p>
-              )}
-            </section>
           </div>
         </main>
+
+        {/* Your hand — fixed at bottom, scales slightly with viewport */}
+        <section className="fixed bottom-0 left-0 right-0 z-30 px-4 py-3 md:px-6 md:py-4">
+          <div className="max-w-6xl mx-auto flex flex-col items-center">
+            <h2 className="text-base md:text-lg font-semibold text-gray-300 mb-2">
+              {exchangePhase && myExchangePair
+                ? `Select ${myExchangePair.count} card${myExchangePair.count !== 1 ? 's' : ''} to give — your hand (${myHandSorted.length} cards)`
+                : `Your hand (${myHandSorted.length} cards)`}
+            </h2>
+            {myHandSorted.length === 0 ? (
+              <p className="text-gray-500 text-sm">No cards.</p>
+            ) : (
+              <div
+                className="flex flex-wrap items-end justify-center gap-4 md:gap-6 origin-bottom"
+                style={{
+                  transform: 'scale(min(1.08, max(0.88, 0.75 + 0.00025 * 100vw)))',
+                }}
+              >
+                {handGroups.map((group) => (
+                  <div
+                    key={group.rank}
+                    className="flex items-end shrink-0"
+                  >
+                    {group.cards.map(({ cardId, index }, i) => (
+                      <div
+                        key={`${cardId}-${index}`}
+                        className="relative"
+                        style={{
+                          marginLeft: i === 0 ? 0 : -20,
+                          zIndex: selectedSet.has(index) ? 20 : 10 + i,
+                        }}
+                      >
+                        <Card
+                          cardId={cardId}
+                          selected={selectedSet.has(index)}
+                          onClick={() => {
+                            if (exchangePhase && myExchangePair && selectedSet.size >= myExchangePair.count) return;
+                            handleGroupAddOne(group, myHandSorted);
+                          }}
+                          onContextMenu={(e) => {
+                            e.preventDefault();
+                            handleGroupRemoveOne(group);
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+            {selectedSet.size > 0 && (
+              <p className="mt-2 text-sm text-gray-400">
+                {selectedSet.size} card{selectedSet.size !== 1 ? 's' : ''} selected {exchangePhase ? 'to give' : 'to play'}
+              </p>
+            )}
+          </div>
+        </section>
       </div>
       <div className="pointer-events-none absolute top-10 left-10 w-40 h-40 bg-blue-500 rounded-full blur-3xl opacity-30" />
       <div className="pointer-events-none absolute bottom-20 right-20 w-60 h-60 bg-purple-500 rounded-full blur-3xl opacity-30" />
